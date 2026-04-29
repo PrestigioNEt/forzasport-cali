@@ -1,0 +1,16 @@
+# Navegadores modernos que soportamos
+# Last Updated: 2025-01
+
+# > 1% global usage, Chrome 94+, Edge 94+, Safari 14+, Firefox 90+
+# Soporta: ES2020, optional chaining, nullish coalescing, async/await, etc.
+last 2 versions and > 1%
+
+# No soportamos IE11
+# Configuración agresiva para eliminar polyfills innecesarios
+>= 0.5%
+last 2 major versions
+not dead
+not IE 11
+maintained node versions
+defaults
+> 0.2%

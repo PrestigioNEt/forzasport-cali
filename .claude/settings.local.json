@@ -1,0 +1,31 @@
+{
+    "env": {
+    "ANTHROPIC_BASE_URL": "https://api.minimax.io/anthropic",
+    "ANTHROPIC_AUTH_TOKEN": "sk-cp-WZa1gawpZTbga5xWfHOza0EExGKK7EkwNEnBfBl3W0kOiv2Q1Sya-fntOYGqO5OeqXSfSgAWJREGHMqL-heIadB1JE6Xm4BmvYxxYu9cDR8RSu36Z_VpKcQ"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm i:*)",
+      "Bash(npm run build)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(del:*)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(pnpm build)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(curl:*)",
+      "Bash(git checkout:*)",
+      "Bash(python -m json.tool)",
+      "Bash(if exist \".next\" rmdir /s /q .next)",
+      "Bash(test -f c:UsersUsuariopinneacle.env.example)"
+    ]
+  }
+}
