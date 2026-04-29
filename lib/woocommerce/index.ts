@@ -44,6 +44,14 @@ const domain = process.env.NEXT_PUBLIC_WOOCOMMERCE_URL
 // Endpoint directo (para referencia)
 const directEndpoint = `${domain}/graphql`;
 
+// Tags de caché para revalidación
+const TAGS = {
+  products: 'woo-products',
+  collections: 'woo-collections',
+  product: (slug: string) => `woo-product-${slug}`,
+  collection: (slug: string) => `woo-collection-${slug}`,
+};
+
 /**
  * Cliente fetch para WooCommerce GraphQL
  * Similar estructura a shopifyFetch pero adaptado para WPGraphQL
@@ -51,11 +59,13 @@ const directEndpoint = `${domain}/graphql`;
 export async function woocommerceFetch<T>({
   headers,
   query,
-  variables
+  variables,
+  tags
 }: {
   headers?: HeadersInit;
   query: string;
   variables?: object;
+  tags?: string[];
 }): Promise<{ status: number; body: T } | never> {
   try {
     // Usar endpoint directo en servidor, proxy en cliente
@@ -83,7 +93,13 @@ export async function woocommerceFetch<T>({
       fetchOptions.credentials = 'include';
     }
 
-    const result = await fetch(endpoint, fetchOptions);
+    const result = await fetch(endpoint, {
+      ...fetchOptions,
+      // Next.js cache tags (funciona con cache: 'force-cache' por defecto)
+      ...(tags && tags.length > 0 && {
+        next: { tags }
+      })
+    });
 
     const body = await result.json();
 
@@ -323,7 +339,8 @@ const reshapeCart = (cart: WooCart): any => {
 export async function getProduct(handle: string): Promise<Product | undefined> {
   const res = await woocommerceFetch<WooProductOperation>({
     query: getProductQuery,
-    variables: { slug: handle }
+    variables: { slug: handle },
+    tags: [TAGS.products, TAGS.product(handle)]
   });
 
   const product = res.body.data.product;
@@ -364,7 +381,8 @@ export async function getProducts({
     query: getProductsQuery,
     variables: {
       search: query
-    }
+    },
+    tags: [TAGS.products]
   });
 
   const products = res.body.data.products?.nodes || [];
@@ -378,7 +396,8 @@ export async function getProducts({
 export async function getCollection(handle: string): Promise<Collection | undefined> {
   const res = await woocommerceFetch<WooCollectionOperation>({
     query: getCollectionQuery,
-    variables: { slug: handle }
+    variables: { slug: handle },
+    tags: [TAGS.collections, TAGS.collection(handle)]
   });
 
   const collection = res.body.data.productCategory;
@@ -393,7 +412,8 @@ export async function getCollection(handle: string): Promise<Collection | undefi
 export const getCollections = cache(async (): Promise<Collection[]> => {
   try {
     const res = await woocommerceFetch<WooCollectionsOperation>({
-      query: getCollectionsQuery
+      query: getCollectionsQuery,
+      tags: [TAGS.collections]
     });
 
     const wooCollections = res.body.data.productCategories?.nodes || [];
@@ -434,7 +454,8 @@ export const getCollections = cache(async (): Promise<Collection[]> => {
 export async function getSearchResults(searchQuery: string): Promise<Product[]> {
   const res = await woocommerceFetch<WooSearchOperation>({
     query: getSearchProductsQuery,
-    variables: { search: searchQuery }
+    variables: { search: searchQuery },
+    tags: [TAGS.products]
   });
 
   const products = res.body.data.products?.nodes || [];
