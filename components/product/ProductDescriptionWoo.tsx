@@ -150,8 +150,8 @@ export function ProductDescriptionWoo({ product }: ProductDescriptionWooProps) {
     // DEBUG
     console.log('TALLA SELECCIONADA:', size);
     console.log('VARIACION ENCONTRADA:', matchedVariation ? 'SÍ' : 'NO');
-    if (!matchedVariation && variations.length > 0) {
-      console.log('PRIMERA VARIACION attributes:', variations[0].attributes?.nodes);
+    if (!matchedVariation && variations.length > 0 && variations[0]) {
+      console.log('PRIMERA VARIACION attributes:', variations[0]?.attributes?.nodes);
     }
 
     setSelectedVariation(matchedVariation);
