@@ -22,8 +22,24 @@ const TAGS = {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const body = await req.json().catch(() => ({}));
+    const body = (await req.text().catch(() => '')) as string;
     const secret = req.headers.get('x-webhook-secret');
+
+    // Log para debug - ver qué llega de WooCommerce
+    console.log('🔍 Raw webhook body:', body);
+    console.log('🔍 Headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
+
+    // Intentar parsear de diferentes formatos
+    let data: any = {};
+    try {
+      data = JSON.parse(body);
+    } catch {
+      // WooCommerce puede enviar URL-encoded
+      const params = new URLSearchParams(body);
+      data = Object.fromEntries(params);
+    }
+
+    console.log('🔍 Parsed data:', data);
 
     // Validar secret si está configurado
     if (process.env.WOOCOMMERCE_WEBHOOK_SECRET) {
@@ -32,7 +48,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
     }
 
-    const { type, slug, action } = body;
+    // WooCommerce envía: action, meta, data con id/slug
+    const { action, data: wooData } = data;
+    const slug = wooData?.slug || data.slug || data.id;
+    const type = data.type || (action?.includes('create') ? 'product' : action?.includes('delete') ? 'product' : 'product');
 
     console.log('🔄 WooCommerce Webhook received:', { type, slug, action });
 

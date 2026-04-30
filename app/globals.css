@@ -13,7 +13,7 @@
 
   /* Variables para temas claro/oscuro */
   --background: var(--brand-secondary);
-  --foreground: var(--brand-primary);
+  --foreground: #1F2937; /* Gris oscuro - texto principal */
 
   /* Font families */
   --font-belleza: var(--font-belleza);
@@ -73,8 +73,8 @@
   }
 
   :root {
-    --background: var(--brand-primary);
-    --foreground: var(--brand-secondary);
+    --background: #111827; /* Gris muy oscuro */
+    --foreground: #F9FAFB; /* Blanco grisáceo */
   }
 }
 
