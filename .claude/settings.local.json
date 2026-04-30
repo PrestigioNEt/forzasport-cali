@@ -26,7 +26,8 @@
       "Bash(python -m json.tool)",
       "Bash(if exist \".next\" rmdir /s /q .next)",
       "Bash(test -f c:UsersUsuariopinneacle.env.example)",
-      "Bash(gh auth *)"
+      "Bash(gh auth *)",
+      "Bash(powershell -Command \"Invoke-RestMethod -Uri 'https://forzasport-cali.vercel.app/api/revalidate' -Method POST -ContentType 'application/json' -Body '{\\\\\"type\\\\\":\\\\\"product\\\\\",\\\\\"slug\\\\\":\\\\\"nike-air-max-1-phantaci-grand-piano\\\\\"}'\")"
     ]
   }
 }

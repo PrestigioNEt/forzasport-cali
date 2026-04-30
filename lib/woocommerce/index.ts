@@ -52,9 +52,44 @@ const TAGS = {
   collection: (slug: string) => `woo-collection-${slug}`,
 };
 
+// Configuración de timeout y retry
+const FETCH_CONFIG = {
+  timeout: 45000, // 45 segundos timeout
+  retries: 1, // 1 retry (no muchos para no empeorar la UX)
+  retryDelay: 2000 // 2 segundos entre reintentos
+};
+
+/**
+ * Fetch simple con retry - sin AbortController para evitar abortos prematuros
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries: number = FETCH_CONFIG.retries
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error: any) {
+      lastError = error;
+
+      if (attempt < retries) {
+        console.log(`🔄 Retry ${attempt + 1}/${retries} después de ${FETCH_CONFIG.retryDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, FETCH_CONFIG.retryDelay));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 /**
  * Cliente fetch para WooCommerce GraphQL
  * Similar estructura a shopifyFetch pero adaptado para WPGraphQL
+ * Con timeout y retry automático
  */
 export async function woocommerceFetch<T>({
   headers,
@@ -93,7 +128,7 @@ export async function woocommerceFetch<T>({
       fetchOptions.credentials = 'include';
     }
 
-    const result = await fetch(endpoint, {
+    const result = await fetchWithRetry(endpoint, {
       ...fetchOptions,
       // Next.js cache tags (funciona con cache: 'force-cache' por defecto)
       ...(tags && tags.length > 0 && {
@@ -101,7 +136,27 @@ export async function woocommerceFetch<T>({
       })
     });
 
+    // Verificar si la respuesta es JSON válido antes de parsear
+    const contentType = result.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error('❌ WooCommerce devolvió HTML en vez de JSON:', {
+        status: result.status,
+        url: endpoint,
+        contentType: contentType
+      });
+      throw new Error(`WooCommerce API no disponible (status: ${result.status})`);
+    }
+
     const body = await result.json();
+
+    // Verificar si el body es un error HTML camuflado
+    if (typeof body === 'string' && body.startsWith('<!DOCTYPE')) {
+      console.error('❌ WooCommerce devolvió HTML en vez de JSON:', {
+        status: result.status,
+        url: endpoint
+      });
+      throw new Error(`WooCommerce API no disponible`);
+    }
 
     if (!result.ok) {
       console.error('❌ WooCommerce fetch error:', {
@@ -337,14 +392,59 @@ const reshapeCart = (cart: WooCart): any => {
 // ============================================================================
 
 export async function getProduct(handle: string): Promise<Product | undefined> {
+  // Intentar con la query principal por slug
   const res = await woocommerceFetch<WooProductOperation>({
     query: getProductQuery,
     variables: { slug: handle },
     tags: [TAGS.products, TAGS.product(handle)]
   });
 
-  const product = res.body.data.product;
+  let product = res.body.data.product;
+
+  // Si no encuentra por slug, buscar por búsqueda fuzzy
   if (!product) {
+    console.log(`🔍 Producto no encontrado por slug "${handle}", intentando búsqueda...`);
+
+    const searchRes = await woocommerceFetch<WooProductsOperation>({
+      query: `
+        query SearchProduct($search: String!) {
+          products(where: {search: $search}, first: 5) {
+            nodes {
+              id
+              slug
+              name
+              ... on SimpleProduct {
+                price
+                image { sourceUrl altText }
+              }
+              ... on VariableProduct {
+                price
+                image { sourceUrl altText }
+              }
+            }
+          }
+        }
+      `,
+      variables: { search: handle }
+    });
+
+    // Buscar coincidencia exacta de slug
+    const found = searchRes.body.data.products?.nodes.find(
+      (p: any) => p.slug === handle
+    );
+
+    if (found) {
+      // Hacer query completa del producto encontrado
+      const fullRes = await woocommerceFetch<WooProductOperation>({
+        query: getProductQuery,
+        variables: { slug: found.slug }
+      });
+      product = fullRes.body.data.product;
+    }
+  }
+
+  if (!product) {
+    console.warn(`⚠️ Producto no encontrado: ${handle}`);
     return undefined;
   }
 

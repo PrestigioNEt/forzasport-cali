@@ -3,7 +3,7 @@
  */
 
 export const getProductQuery = `
-# Obtener producto por slug
+# Obtener producto por slug - versión mejorada con fallback search
 query getProduct($slug: ID!) {
   product(id: $slug, idType: SLUG) {
     __typename
@@ -11,6 +11,7 @@ query getProduct($slug: ID!) {
     databaseId
     slug
     name
+    status
     shortDescription
     description
     modified
@@ -78,6 +79,42 @@ query getProduct($slug: ID!) {
             altText
           }
         }
+      }
+    }
+  }
+}
+`;
+
+// Query alternativa que busca por databaseId
+export const getProductByIdQuery = `
+query getProductById($databaseId: Int!) {
+  product(id: $databaseId, idType: DATABASE_ID) {
+    __typename
+    id
+    databaseId
+    slug
+    name
+    status
+    shortDescription
+    description
+    ... on SimpleProduct {
+      price
+      regularPrice
+      salePrice
+      stockStatus
+      image {
+        sourceUrl
+        altText
+      }
+    }
+    ... on VariableProduct {
+      price
+      regularPrice
+      salePrice
+      stockStatus
+      image {
+        sourceUrl
+        altText
       }
     }
   }
