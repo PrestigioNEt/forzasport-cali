@@ -109,12 +109,24 @@ export function ProductDescriptionWoo({ product }: ProductDescriptionWooProps) {
   );
 
   // Obtener precio y stock actual
-  const currentPrice = selectedVariation?.price || product.price || 'Precio no disponible';
+  const currentPrice = cleanPrice(selectedVariation?.price) || cleanPrice(product.price) || 'Precio no disponible';
   const currentStockStatus = selectedVariation?.stockStatus || product.stockStatus;
   const stockQuantity = selectedVariation?.stockQuantity;
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState(false);
+
+  // Función para limpiar HTML entities de precios
+  const cleanPrice = (price: string | undefined) => {
+    if (!price) return price;
+    return String(price)
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&#160;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
 
   // Calcular cantidad máxima disponible
   const MAX_QUANTITY = stockQuantity && stockQuantity > 0 ? stockQuantity : 99;
@@ -237,9 +249,9 @@ export function ProductDescriptionWoo({ product }: ProductDescriptionWooProps) {
           <p className="font-moderat text-2xl lg:text-3xl font-semibold text-gray-900">
             {currentPrice}
           </p>
-          {product.salePrice && product.regularPrice && product.regularPrice !== product.salePrice && (
+          {product.salePrice && product.regularPrice && cleanPrice(product.regularPrice) !== cleanPrice(product.salePrice) && (
             <p className="text-sm text-gray-500 line-through">
-              {product.regularPrice}
+              {cleanPrice(product.regularPrice)}
             </p>
           )}
         </div>
@@ -283,7 +295,7 @@ export function ProductDescriptionWoo({ product }: ProductDescriptionWooProps) {
         <div className="py-4">
           <ProductVariations
             variations={variations}
-            defaultPrice={product.price || 'Precio no disponible'}
+            defaultPrice={cleanPrice(product.price) || 'Precio no disponible'}
             onVariationChange={(v) => setSelectedVariation(v)}
           />
         </div>
