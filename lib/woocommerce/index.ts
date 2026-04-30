@@ -52,44 +52,13 @@ const TAGS = {
   collection: (slug: string) => `woo-collection-${slug}`,
 };
 
-// Configuración de timeout y retry
+// Configuración
 const FETCH_CONFIG = {
-  timeout: 45000, // 45 segundos timeout
-  retries: 1, // 1 retry (no muchos para no empeorar la UX)
-  retryDelay: 2000 // 2 segundos entre reintentos
+  retries: 0 // Sin reintentos - el servidor es lento y mejor fallar rápido
 };
 
 /**
- * Fetch simple con retry - sin AbortController para evitar abortos prematuros
- */
-async function fetchWithRetry(
-  url: string,
-  options: RequestInit,
-  retries: number = FETCH_CONFIG.retries
-): Promise<Response> {
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const response = await fetch(url, options);
-      return response;
-    } catch (error: any) {
-      lastError = error;
-
-      if (attempt < retries) {
-        console.log(`🔄 Retry ${attempt + 1}/${retries} después de ${FETCH_CONFIG.retryDelay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, FETCH_CONFIG.retryDelay));
-      }
-    }
-  }
-
-  throw lastError;
-}
-
-/**
  * Cliente fetch para WooCommerce GraphQL
- * Similar estructura a shopifyFetch pero adaptado para WPGraphQL
- * Con timeout y retry automático
  */
 export async function woocommerceFetch<T>({
   headers,
@@ -103,13 +72,10 @@ export async function woocommerceFetch<T>({
   tags?: string[];
 }): Promise<{ status: number; body: T } | never> {
   try {
-    // Usar endpoint directo en servidor, proxy en cliente
-    // El proxy es necesario para manejar cookies de sesión en el cliente
     const isServer = typeof window === 'undefined';
     const endpoint = isServer ? directEndpoint : GRAPHQL_ENDPOINT;
 
-    console.log(`🔵 Fetching WooCommerce (${isServer ? 'Server' : 'Client'}): ${isServer ? directEndpoint : GRAPHQL_ENDPOINT}`);
-    if (variables) console.log('🔵 Variables:', variables);
+    console.log(`🔵 Fetching WooCommerce (${isServer ? 'Server' : 'Client'}): ${endpoint}`);
 
     const fetchOptions: RequestInit = {
       method: 'POST',
@@ -123,29 +89,11 @@ export async function woocommerceFetch<T>({
       })
     };
 
-    // Solo agregar credentials en cliente para incluir cookies
     if (!isServer) {
       fetchOptions.credentials = 'include';
     }
 
-    const result = await fetchWithRetry(endpoint, {
-      ...fetchOptions,
-      // Next.js cache tags (funciona con cache: 'force-cache' por defecto)
-      ...(tags && tags.length > 0 && {
-        next: { tags }
-      })
-    });
-
-    // Verificar si la respuesta es JSON válido antes de parsear
-    const contentType = result.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error('❌ WooCommerce devolvió HTML en vez de JSON:', {
-        status: result.status,
-        url: endpoint,
-        contentType: contentType
-      });
-      throw new Error(`WooCommerce API no disponible (status: ${result.status})`);
-    }
+    const result = await fetch(endpoint, fetchOptions);
 
     const body = await result.json();
 
