@@ -37,7 +37,7 @@ export function RecentlyViewedProducts({
     <section className="border-t border-gray-200 mt-16 pt-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="font-belleza text-2xl font-light tracking-wide text-gray-900">
+          <h2 className="font-belleza text-2xl font-light tracking-wide text-white">
             {title}
           </h2>
           {productsToShow.length >= maxProducts && (
