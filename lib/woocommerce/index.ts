@@ -154,11 +154,19 @@ function parsePrice(priceHtml: string | undefined): { amount: string; currencyCo
     return { amount: '0', currencyCode: 'USD' };
   }
 
-  // Limpiar HTML
+  // Limpiar HTML y HTML entities (usar regex global)
   const priceHtmlStr = String(priceHtml);
   console.log('🔍 priceHtml convertido a string:', priceHtmlStr);
 
-  const cleanPrice = priceHtmlStr.replace(/<[^>]*>/g, '').trim();
+  // Primero convertir HTML entities comunes (con regex global)
+  let cleanPrice = priceHtmlStr
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#160;/gi, ' ')
+    .replace(/&amp;/gi, '&');
+
+  // Limpiar tags HTML
+  cleanPrice = cleanPrice.replace(/<[^>]*>/g, '').trim();
+
   console.log('🔍 cleanPrice:', cleanPrice);
 
   // Extraer valor numérico (admite formatos: $50,000.00, 50.000, $50.000)
