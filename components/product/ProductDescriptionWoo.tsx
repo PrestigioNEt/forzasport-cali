@@ -108,14 +108,6 @@ export function ProductDescriptionWoo({ product }: ProductDescriptionWooProps) {
     (attr) => attr.name?.toLowerCase().includes('talla') || attr.name?.startsWith('pa_')
   );
 
-  // Obtener precio y stock actual
-  const currentPrice = cleanPrice(selectedVariation?.price) || cleanPrice(product.price) || 'Precio no disponible';
-  const currentStockStatus = selectedVariation?.stockStatus || product.stockStatus;
-  const stockQuantity = selectedVariation?.stockQuantity;
-
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [sizeError, setSizeError] = useState(false);
-
   // Función para limpiar HTML entities de precios
   const cleanPrice = (price: string | undefined) => {
     if (!price) return price;
@@ -127,6 +119,14 @@ export function ProductDescriptionWoo({ product }: ProductDescriptionWooProps) {
       .replace(/\s+/g, ' ')
       .trim();
   };
+
+  // Obtener precio y stock actual
+  const currentPrice = cleanPrice(selectedVariation?.price) || cleanPrice(product.price) || 'Precio no disponible';
+  const currentStockStatus = selectedVariation?.stockStatus || product.stockStatus;
+  const stockQuantity = selectedVariation?.stockQuantity;
+
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [sizeError, setSizeError] = useState(false);
 
   // Calcular cantidad máxima disponible
   const MAX_QUANTITY = stockQuantity && stockQuantity > 0 ? stockQuantity : 99;
