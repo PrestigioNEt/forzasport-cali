@@ -60,13 +60,25 @@ async function getFeaturedProducts() {
       return [];
     }
 
+    // Función para limpiar precios de HTML entities
+    const cleanPrice = (price: string) => {
+      if (!price) return price;
+      return String(price)
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&#160;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
     // Adaptar a formato simple
     const adapted = products.slice(0, 8).map((product: any) => {
       const adaptedProduct = {
         id: product.id,
         name: product.name,
         slug: product.slug,
-        price: product.price || 'Precio no disponible',
+        price: cleanPrice(product.price) || 'Precio no disponible',
         image: product.image?.sourceUrl || product.image?.url || '/placeholder.jpg',
         category: 'Accesorios',
         description: product.description || product.shortDescription || ''
