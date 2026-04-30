@@ -9,6 +9,9 @@ import { ProductViewTracker } from '@/components/product/ProductViewTracker';
  * Next.js 15: params es async y debe ser awaited
  */
 
+// ISR: Revalidar automáticamente cada 60 segundos
+export const revalidate = 60;
+
 export async function generateStaticParams() {
   return [];
 }

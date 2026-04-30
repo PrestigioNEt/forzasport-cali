@@ -5,6 +5,9 @@ import Link from 'next/link';
  * Muestra TODOS los productos en un grid
  */
 
+// ISR: Revalidar automáticamente cada 60 segundos
+export const revalidate = 60;
+
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

@@ -7,6 +7,9 @@ import Image from 'next/image';
  * Versión limpia sin dependencias de Shopify
  */
 
+// ISR: Revalidar automáticamente cada 60 segundos
+export const revalidate = 60;
+
 // Conexión WooCommerce
 import {
   getProducts as getWooProducts,
